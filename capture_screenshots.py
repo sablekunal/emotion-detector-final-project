@@ -6,12 +6,28 @@ async def main():
         browser = await p.chromium.launch()
         page = await browser.new_page()
         
-        # Test 1: Application Deployment
-        await page.goto('http://localhost:5000/emotion?text=I am happy today')
+        page.on("console", lambda msg: print(f"Browser console: {msg.text}"))
+        
+        print("Running Test 1")
+        await page.goto('http://127.0.0.1:5000/')
+        await page.fill('#textToAnalyze', 'I am so happy I am doing this.')
+        await page.click('button')
+        try:
+            await page.wait_for_function("document.getElementById('system_response').innerText.length > 0", timeout=5000)
+        except Exception as e:
+            print("Error waiting for response 1:", e)
+            print(await page.content())
         await page.screenshot(path='6b_deployment_test.png')
         
-        # Test 2: Error Handling Interface
-        await page.goto('http://localhost:5000/emotion?text=')
+        print("Running Test 2")
+        await page.goto('http://127.0.0.1:5000/')
+        await page.fill('#textToAnalyze', '')
+        await page.click('button')
+        try:
+            await page.wait_for_function("document.getElementById('system_response').innerText === 'Invalid text! Please try again!'", timeout=5000)
+        except Exception as e:
+            print("Error waiting for response 2:", e)
+            print(await page.content())
         await page.screenshot(path='7c_error_handling_interface.png')
         
         await browser.close()

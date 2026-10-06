@@ -1,54 +1,56 @@
 """Emotion detection module using IBM Watson NLP."""
 
-import os
+import json
+import requests
 
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from ibm_watson import NaturalLanguageUnderstandingV1
-from ibm_watson.natural_language_understanding_v1 import EmotionOptions, Features
-
-
-def emotion_detector(text):
-    """Detect the dominant emotion in the given text."""
-    if text is None or not str(text).strip():
-        return {"error": "Text is blank", "status_code": 400}
-
-    api_key = os.getenv("WATSON_API_KEY", "demo-key")
-    url = os.getenv("WATSON_URL", "https://example.com")
-
-    if api_key == "demo-key" and url == "https://example.com":
+def emotion_detector(text_to_analyse):
+    """Detect emotions using IBM Watson NLP."""
+    if not text_to_analyse or not text_to_analyse.strip():
         return {
-            "anger": 0.0,
-            "disgust": 0.0,
-            "fear": 0.0,
-            "joy": 0.98,
-            "sadness": 0.0,
-            "dominant_emotion": "joy",
-            "status_code": 200,
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
         }
 
-    authenticator = IAMAuthenticator(api_key)
-    natural_language_understanding = NaturalLanguageUnderstandingV1(
-        version="2022-04-01",
-        authenticator=authenticator,
+    url = (
+        'https://sn-watson-emotion.labs.skills.network/v1/'
+        'watson.runtime.nlp.v1/NlpService/EmotionPredict'
     )
-    natural_language_understanding.set_service_url(url)
+    header = {"grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"}
+    myobj = { "raw_document": { "text": text_to_analyse } }
 
-    response = natural_language_understanding.analyze(
-        text=text,
-        features=Features(emotion=EmotionOptions(document=True)),
-    ).get_result()
+    response = requests.post(url, json=myobj, headers=header, timeout=10)
 
-    emotions = response.get("emotion", {}).get("document", {}).get("emotion", {})
-    if not emotions:
-        raise ValueError("No emotion data returned from Watson NLP")
+
+    if response.status_code == 400:
+        return {
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
+        }
+
+    formatted_response = json.loads(response.text)
+    emotions = formatted_response['emotionPredictions'][0]['emotion']
+
+    anger = emotions['anger']
+    disgust = emotions['disgust']
+    fear = emotions['fear']
+    joy = emotions['joy']
+    sadness = emotions['sadness']
 
     dominant_emotion = max(emotions, key=emotions.get)
+
     return {
-        "anger": emotions.get("anger", 0.0),
-        "disgust": emotions.get("disgust", 0.0),
-        "fear": emotions.get("fear", 0.0),
-        "joy": emotions.get("joy", 0.0),
-        "sadness": emotions.get("sadness", 0.0),
-        "dominant_emotion": dominant_emotion,
-        "status_code": 200,
+        'anger': anger,
+        'disgust': disgust,
+        'fear': fear,
+        'joy': joy,
+        'sadness': sadness,
+        'dominant_emotion': dominant_emotion
     }

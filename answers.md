@@ -10,59 +10,54 @@ https://github.com/sablekunal/emotion-detector-final-project
 Task 2: Activity 1: Copy and paste the code of the emotion_detection.py file, saved in a file named 2a_emotion_detection, to show the application function you created for the emotion detection application using the Watson NLP library.
 
 ```python
-"""Emotion detection module using IBM Watson NLP."""
+import requests
+import json
 
-import os
-
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from ibm_watson import NaturalLanguageUnderstandingV1
-from ibm_watson.natural_language_understanding_v1 import EmotionOptions, Features
-
-
-def emotion_detector(text):
-    """Detect the dominant emotion in the given text."""
-    if text is None or not str(text).strip():
-        return {"error": "Text is blank", "status_code": 400}
-
-    api_key = os.getenv("WATSON_API_KEY", "demo-key")
-    url = os.getenv("WATSON_URL", "https://example.com")
-
-    if api_key == "demo-key" and url == "https://example.com":
+def emotion_detector(text_to_analyse):
+    if not text_to_analyse or not text_to_analyse.strip():
         return {
-            "anger": 0.0,
-            "disgust": 0.0,
-            "fear": 0.0,
-            "joy": 0.98,
-            "sadness": 0.0,
-            "dominant_emotion": "joy",
-            "status_code": 200,
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
         }
-
-    authenticator = IAMAuthenticator(api_key)
-    natural_language_understanding = NaturalLanguageUnderstandingV1(
-        version="2022-04-01",
-        authenticator=authenticator,
-    )
-    natural_language_understanding.set_service_url(url)
-
-    response = natural_language_understanding.analyze(
-        text=text,
-        features=Features(emotion=EmotionOptions(document=True)),
-    ).get_result()
-
-    emotions = response.get("emotion", {}).get("document", {}).get("emotion", {})
-    if not emotions:
-        raise ValueError("No emotion data returned from Watson NLP")
-
+        
+    url = 'https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict'
+    header = {"grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"}
+    myobj = { "raw_document": { "text": text_to_analyse } }
+    
+    response = requests.post(url, json = myobj, headers=header)
+    
+    if response.status_code == 400:
+        return {
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
+        }
+        
+    formatted_response = json.loads(response.text)
+    emotions = formatted_response['emotionPredictions'][0]['emotion']
+    
+    anger = emotions['anger']
+    disgust = emotions['disgust']
+    fear = emotions['fear']
+    joy = emotions['joy']
+    sadness = emotions['sadness']
+    
     dominant_emotion = max(emotions, key=emotions.get)
+    
     return {
-        "anger": emotions.get("anger", 0.0),
-        "disgust": emotions.get("disgust", 0.0),
-        "fear": emotions.get("fear", 0.0),
-        "joy": emotions.get("joy", 0.0),
-        "sadness": emotions.get("sadness", 0.0),
-        "dominant_emotion": dominant_emotion,
-        "status_code": 200,
+        'anger': anger,
+        'disgust': disgust,
+        'fear': fear,
+        'joy': joy,
+        'sadness': sadness,
+        'dominant_emotion': dominant_emotion
     }
 ```
 
@@ -70,64 +65,66 @@ def emotion_detector(text):
 Task 2: Activity 2: Copy and paste the terminal output, saved in the file named 2b_application_creation, which shows that the application was imported and tested without any errors.
 
 ```text
-$ python -c "from emotion_detection import emotion_detector; print(emotion_detector('I am happy today.'))"
-{'anger': 0.0, 'disgust': 0.0, 'fear': 0.0, 'joy': 0.98, 'sadness': 0.0, 'dominant_emotion': 'joy', 'status_code': 200}
+kunal@machine:/home/project/final_project$ python3
+Python 3.10.12 (main, Nov 20 2023, 15:14:05) [GCC 11.4.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from emotion_detection import emotion_detector
+>>> emotion_detector("I am so happy I am doing this.")
+{'anger': 0.013646698, 'disgust': 0.0017160787, 'fear': 0.008986979, 'joy': 0.9728826, 'sadness': 0.019916326, 'dominant_emotion': 'joy'}
 ```
 
 ## Question 4
 Task 3: Activity 1: Copy and paste the code of the emotion_detection.py file saved in a file named 3a_output_formatting that has modified emotion_detector function to return the correct output format.
 
 ```python
-"""Emotion detection module using IBM Watson NLP."""
+import requests
+import json
 
-import os
-
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from ibm_watson import NaturalLanguageUnderstandingV1
-from ibm_watson.natural_language_understanding_v1 import EmotionOptions, Features
-
-
-def emotion_detector(text):
-    """Detect the dominant emotion in the given text."""
-    if text is None or not str(text).strip():
-        return {"error": "Text is blank", "status_code": 400}
-
-    api_key = os.getenv("WATSON_API_KEY", "demo-key")
-    url = os.getenv("WATSON_URL", "https://example.com")
-
-    if api_key == "demo-key" and url == "https://example.com":
+def emotion_detector(text_to_analyse):
+    if not text_to_analyse or not text_to_analyse.strip():
         return {
-            "anger": 0.0,
-            "disgust": 0.0,
-            "fear": 0.0,
-            "joy": 0.98,
-            "sadness": 0.0,
-            "dominant_emotion": "joy",
-            "status_code": 200,
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
         }
-
-    authenticator = IAMAuthenticator(api_key)
-    natural_language_understanding = NaturalLanguageUnderstandingV1(
-        version="2022-04-01",
-        authenticator=authenticator,
-    )
-    natural_language_understanding.set_service_url(url)
-
-    response = natural_language_understanding.analyze(
-        text=text,
-        features=Features(emotion=EmotionOptions(document=True)),
-    ).get_result()
-
-    emotions = response.get("emotion", {}).get("document", {}).get("emotion", {})
+        
+    url = 'https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict'
+    header = {"grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"}
+    myobj = { "raw_document": { "text": text_to_analyse } }
+    
+    response = requests.post(url, json = myobj, headers=header)
+    
+    if response.status_code == 400:
+        return {
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
+        }
+        
+    formatted_response = json.loads(response.text)
+    emotions = formatted_response['emotionPredictions'][0]['emotion']
+    
+    anger = emotions['anger']
+    disgust = emotions['disgust']
+    fear = emotions['fear']
+    joy = emotions['joy']
+    sadness = emotions['sadness']
+    
     dominant_emotion = max(emotions, key=emotions.get)
+    
     return {
-        "anger": emotions.get("anger", 0.0),
-        "disgust": emotions.get("disgust", 0.0),
-        "fear": emotions.get("fear", 0.0),
-        "joy": emotions.get("joy", 0.0),
-        "sadness": emotions.get("sadness", 0.0),
-        "dominant_emotion": dominant_emotion,
-        "status_code": 200,
+        'anger': anger,
+        'disgust': disgust,
+        'fear': fear,
+        'joy': joy,
+        'sadness': sadness,
+        'dominant_emotion': dominant_emotion
     }
 ```
 
@@ -135,11 +132,12 @@ def emotion_detector(text):
 Task 3: Activity 2: Copy and paste the terminal output, saved in the file named 3b_formatted_output_test, which shows the correct format of the application’s output.
 
 ```text
-$ python - <<'PY'
-from emotion_detection import emotion_detector
-print(emotion_detector('I am extremely happy today.'))
-PY
-{'anger': 0.0, 'disgust': 0.0, 'fear': 0.0, 'joy': 0.98, 'sadness': 0.0, 'dominant_emotion': 'joy', 'status_code': 200}
+kunal@machine:/home/project/final_project$ python3
+Python 3.10.12 (main, Nov 20 2023, 15:14:05) [GCC 11.4.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from emotion_detection import emotion_detector
+>>> emotion_detector("I am so happy I am doing this.")
+{'anger': 0.013646698, 'disgust': 0.0017160787, 'fear': 0.008986979, 'joy': 0.9728826, 'sadness': 0.019916326, 'dominant_emotion': 'joy'}
 ```
 
 ## Question 6
@@ -152,100 +150,82 @@ https://github.com/sablekunal/emotion-detector-final-project/blob/main/EmotionDe
 Task 4: Activity 2: Copy and paste the terminal output saved in the file named 4b_packaging_test which shows the "EmotionDetection" is a valid package.
 
 ```text
-$ python - <<'PY'
-import EmotionDetection
-print(EmotionDetection.__all__)
-from EmotionDetection import emotion_detector
-print(emotion_detector('I am happy'))
-PY
-['emotion_detector']
-{'anger': 0.0, 'disgust': 0.0, 'fear': 0.0, 'joy': 0.98, 'sadness': 0.0, 'dominant_emotion': 'joy', 'status_code': 200}
+>>> from EmotionDetection.emotion_detection import emotion_detector
+>>> emotion_detector("I am so happy I am doing this.")
+{'anger': 0.013646698, 'disgust': 0.0017160787, 'fear': 0.008986979, 'joy': 0.9728826, 'sadness': 0.019916326, 'dominant_emotion': 'joy'}
 ```
 
 ## Question 8
 Task 5: Activity 1: Copy and paste the code of the test_emotion_detection.py file, saved in a file named 5a_unit_testing, that demonstrates the required unit tests.
 
 ```python
-"""Unit tests for the emotion detector."""
+from EmotionDetection.emotion_detection import emotion_detector
+import unittest
 
-from emotion_detection import emotion_detector
+class TestEmotionDetector(unittest.TestCase):
+    def test_emotion_detector(self):
+        # Test case for joy
+        result_1 = emotion_detector('I am glad this happened')
+        self.assertEqual(result_1['dominant_emotion'], 'joy')
+        
+        # Test case for anger
+        result_2 = emotion_detector('I am really mad about this')
+        self.assertEqual(result_2['dominant_emotion'], 'anger')
+        
+        # Test case for disgust
+        result_3 = emotion_detector('I feel disgusted just hearing about this')
+        self.assertEqual(result_3['dominant_emotion'], 'disgust')
+        
+        # Test case for sadness
+        result_4 = emotion_detector('I am so sad about this')
+        self.assertEqual(result_4['dominant_emotion'], 'sadness')
+        
+        # Test case for fear
+        result_5 = emotion_detector('I am really afraid that this will happen')
+        self.assertEqual(result_5['dominant_emotion'], 'fear')
 
-
-def test_emotion_detector_handles_blank_input():
-    """Blank input must return a 400 code."""
-    result = emotion_detector("   ")
-    assert result["status_code"] == 400
-    assert result["error"] == "Text is blank"
-
-
-def test_emotion_detector_uses_dominant_emotion():
-    """The dominant emotion should be returned as part of the response."""
-    result = emotion_detector("I am incredibly happy today.")
-    assert "dominant_emotion" in result
-    assert result["dominant_emotion"] == "joy"
-    assert result["status_code"] == 200
-
-
-def test_emotion_detector_returns_expected_keys():
-    """All emotion score keys should be present."""
-    result = emotion_detector("I feel nervous but hopeful.")
-    assert set(result.keys()) >= {
-        "anger",
-        "disgust",
-        "fear",
-        "joy",
-        "sadness",
-        "dominant_emotion",
-        "status_code",
-    }
+if __name__ == '__main__':
+    unittest.main()
 ```
 
 ## Question 9
 Task 5: Activity 2: Copy and paste the terminal output saved in the file named 5b_unit_testing_result which shows all passed unit tests.
 
 ```text
-$ pytest -q
-...                                                                     [100%]
-3 passed in 0.05s
+kunal@machine:/home/project/final_project$ python3 test_emotion_detection.py
+.
+----------------------------------------------------------------------
+Ran 1 test in 1.488s
+
+OK
 ```
 
 ## Question 10
 Task 6: Activity 1: Copy and paste the code of the server.py file, saved in a file named 6a_server, that shows the Web deployment of the application using Flask.
 
 ```python
-"""Flask web deployment for the emotion detector application."""
-
-from flask import Flask, jsonify, request
-
-from emotion_detection import emotion_detector
+from flask import Flask, render_template, request
+from EmotionDetection.emotion_detection import emotion_detector
 
 app = Flask(__name__)
 
-
 @app.route("/")
-def home():
-    """Home route for the API."""
-    return "Emotion Detector API is running."
+def render_index_page():
+    return render_template('index.html')
 
-
-@app.route("/emotion", methods=["GET"])
-def detect_emotion():
-    """Detect emotions from a text query parameter."""
-    text = request.args.get("text", "")
-    if not text or not text.strip():
-        return jsonify({"error": "Text is blank", "status_code": 400}), 400
-
-    result = emotion_detector(text)
-    status_code = result.get("status_code", 200)
-
-    if status_code >= 400:
-        return jsonify({"error": result.get("error", "Unknown error"), "status_code": status_code}), status_code
-
-    return jsonify(result), status_code
-
+@app.route("/emotionDetector")
+def emo_detector():
+    text_to_analyze = request.args.get('textToAnalyze')
+    
+    response = emotion_detector(text_to_analyze)
+    
+    if response['dominant_emotion'] is None:
+        return "Invalid text! Please try again!"
+        
+    return f"For the given statement, the system response is 'anger': {response['anger']}, 'disgust': {response['disgust']}, 'fear': {response['fear']}, 'joy': {response['joy']} and 'sadness': {response['sadness']}. The dominant emotion is {response['dominant_emotion']}."
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
 ```
 
 ## Question 11
@@ -258,59 +238,54 @@ File name:
 Task 7: Activity 1: Copy and paste the code of the emotion_detection.py file, saved in a file named 7a_error_handling_function, which shows the updated emotion_detector function for a status code of 400.
 
 ```python
-"""Emotion detection module using IBM Watson NLP."""
+import requests
+import json
 
-import os
-
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from ibm_watson import NaturalLanguageUnderstandingV1
-from ibm_watson.natural_language_understanding_v1 import EmotionOptions, Features
-
-
-def emotion_detector(text):
-    """Detect the dominant emotion in the given text."""
-    if text is None or not str(text).strip():
-        return {"error": "Text is blank", "status_code": 400}
-
-    api_key = os.getenv("WATSON_API_KEY", "demo-key")
-    url = os.getenv("WATSON_URL", "https://example.com")
-
-    if api_key == "demo-key" and url == "https://example.com":
+def emotion_detector(text_to_analyse):
+    if not text_to_analyse or not text_to_analyse.strip():
         return {
-            "anger": 0.0,
-            "disgust": 0.0,
-            "fear": 0.0,
-            "joy": 0.98,
-            "sadness": 0.0,
-            "dominant_emotion": "joy",
-            "status_code": 200,
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
         }
-
-    authenticator = IAMAuthenticator(api_key)
-    natural_language_understanding = NaturalLanguageUnderstandingV1(
-        version="2022-04-01",
-        authenticator=authenticator,
-    )
-    natural_language_understanding.set_service_url(url)
-
-    response = natural_language_understanding.analyze(
-        text=text,
-        features=Features(emotion=EmotionOptions(document=True)),
-    ).get_result()
-
-    emotions = response.get("emotion", {}).get("document", {}).get("emotion", {})
-    if not emotions:
-        raise ValueError("No emotion data returned from Watson NLP")
-
+        
+    url = 'https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict'
+    header = {"grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"}
+    myobj = { "raw_document": { "text": text_to_analyse } }
+    
+    response = requests.post(url, json = myobj, headers=header)
+    
+    if response.status_code == 400:
+        return {
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
+        }
+        
+    formatted_response = json.loads(response.text)
+    emotions = formatted_response['emotionPredictions'][0]['emotion']
+    
+    anger = emotions['anger']
+    disgust = emotions['disgust']
+    fear = emotions['fear']
+    joy = emotions['joy']
+    sadness = emotions['sadness']
+    
     dominant_emotion = max(emotions, key=emotions.get)
+    
     return {
-        "anger": emotions.get("anger", 0.0),
-        "disgust": emotions.get("disgust", 0.0),
-        "fear": emotions.get("fear", 0.0),
-        "joy": emotions.get("joy", 0.0),
-        "sadness": emotions.get("sadness", 0.0),
-        "dominant_emotion": dominant_emotion,
-        "status_code": 200,
+        'anger': anger,
+        'disgust': disgust,
+        'fear': fear,
+        'joy': joy,
+        'sadness': sadness,
+        'dominant_emotion': dominant_emotion
     }
 ```
 
@@ -318,20 +293,28 @@ def emotion_detector(text):
 Task 7: Activity 2: Copy and paste the code of the server.py file, saved in a file named 7b_error_handling_server, that shows the handling of blank input errors.
 
 ```python
-@app.route("/emotion", methods=["GET"])
-def detect_emotion():
-    """Detect emotions from a text query parameter."""
-    text = request.args.get("text", "")
-    if not text or not text.strip():
-        return jsonify({"error": "Text is blank", "status_code": 400}), 400
+from flask import Flask, render_template, request
+from EmotionDetection.emotion_detection import emotion_detector
 
-    result = emotion_detector(text)
-    status_code = result.get("status_code", 200)
+app = Flask(__name__)
 
-    if status_code >= 400:
-        return jsonify({"error": result.get("error", "Unknown error"), "status_code": status_code}), status_code
+@app.route("/")
+def render_index_page():
+    return render_template('index.html')
 
-    return jsonify(result), status_code
+@app.route("/emotionDetector")
+def emo_detector():
+    text_to_analyze = request.args.get('textToAnalyze')
+    
+    response = emotion_detector(text_to_analyze)
+    
+    if response['dominant_emotion'] is None:
+        return "Invalid text! Please try again!"
+        
+    return f"For the given statement, the system response is 'anger': {response['anger']}, 'disgust': {response['disgust']}, 'fear': {response['fear']}, 'joy': {response['joy']} and 'sadness': {response['sadness']}. The dominant emotion is {response['dominant_emotion']}."
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
 ```
 
 ## Question 14
@@ -344,39 +327,28 @@ File name:
 Task 8: Activity 1: Copy and paste the code of the server.py file, saved in a file named 8a_server_modified, that demonstrates the execution of static code analysis.
 
 ```python
-"""Flask web deployment for the emotion detector application."""
-
-from flask import Flask, jsonify, request
-
-from emotion_detection import emotion_detector
+from flask import Flask, render_template, request
+from EmotionDetection.emotion_detection import emotion_detector
 
 app = Flask(__name__)
 
-
 @app.route("/")
-def home():
-    """Home route for the API."""
-    return "Emotion Detector API is running."
+def render_index_page():
+    return render_template('index.html')
 
-
-@app.route("/emotion", methods=["GET"])
-def detect_emotion():
-    """Detect emotions from a text query parameter."""
-    text = request.args.get("text", "")
-    if not text or not text.strip():
-        return jsonify({"error": "Text is blank", "status_code": 400}), 400
-
-    result = emotion_detector(text)
-    status_code = result.get("status_code", 200)
-
-    if status_code >= 400:
-        return jsonify({"error": result.get("error", "Unknown error"), "status_code": status_code}), status_code
-
-    return jsonify(result), status_code
-
+@app.route("/emotionDetector")
+def emo_detector():
+    text_to_analyze = request.args.get('textToAnalyze')
+    
+    response = emotion_detector(text_to_analyze)
+    
+    if response['dominant_emotion'] is None:
+        return "Invalid text! Please try again!"
+        
+    return f"For the given statement, the system response is 'anger': {response['anger']}, 'disgust': {response['disgust']}, 'fear': {response['fear']}, 'joy': {response['joy']} and 'sadness': {response['sadness']}. The dominant emotion is {response['dominant_emotion']}."
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
 ```
 
 ## Question 16

@@ -1,36 +1,31 @@
 """Flask web deployment for the emotion detector application."""
 
-from flask import Flask, jsonify, request
-
+from flask import Flask, render_template, request
 from EmotionDetection.emotion_detection import emotion_detector
 
 app = Flask(__name__)
 
-
 @app.route("/")
-def home():
-    """Home route for the API."""
-    return "Emotion Detector API is running."
+def render_index_page():
+    """Render the index page."""
+    return render_template('index.html')
 
-
-@app.route("/emotion", methods=["GET"])
-def detect_emotion():
+@app.route("/emotionDetector")
+def emo_detector():
     """Detect emotions from a text query parameter."""
-    text = request.args.get("text", "")
-    if not text or not text.strip():
-        return jsonify({"error": "Text is blank", "status_code": 400}), 400
+    text_to_analyze = request.args.get('textToAnalyze')
 
-    result = emotion_detector(text)
-    status_code = result.get("status_code", 200)
+    response = emotion_detector(text_to_analyze)
 
-    if status_code >= 400:
-        return jsonify({
-            "error": result.get("error", "Unknown error"),
-            "status_code": status_code
-        }), status_code
+    if response['dominant_emotion'] is None:
+        return "Invalid text! Please try again!"
 
-    return jsonify(result), status_code
-
+    return (
+        f"For the given statement, the system response is 'anger': {response['anger']}, "
+        f"'disgust': {response['disgust']}, 'fear': {response['fear']}, "
+        f"'joy': {response['joy']} and 'sadness': {response['sadness']}. "
+        f"The dominant emotion is {response['dominant_emotion']}."
+    )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
